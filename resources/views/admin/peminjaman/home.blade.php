@@ -1,0 +1,218 @@
+@extends('admin.layouts.dash')
+@section('content')
+    <div class="flex h-full w-full flex-col">
+        <!-- Main -->
+        <div class="h-full overflow-hidden pl-10">
+            <main id="dashboard-main" class="h-[calc(100vh-1rem)] overflow-auto px-4 py-10">
+                <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                    <div class="flex justify-between">
+                        <h1 class="text-xl text-white bg-gray-400 px-4 py-2 font-semibold w-56">TABLE PEMINJAMAN</h1>
+                        <a href="/dashboard/peminjaman/laporan"
+                            class="text-white bg-blue-500 px-4 py-2 rounded hover:bg-blue-700 focus:outline-none">Laporan</a>
+                    </div>
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">
+                                    Nama Buku
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Tanggal Peminjaman
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Nama Anggota
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Tanggal Kembali
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Nama Pustakawan / Admin
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Action
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($peminjaman as $item)
+                                <tr
+                                    class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
+                                    <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap">
+                                        {{-- jika null maka kosongkan --}}
+                                        {{ $item->details->buku->buku->f_judul }}
+                                        {{-- Fikri Baidel --}}
+                                    </th>
+                                    <td class="px-6 py-4">
+                                        @php
+                                            $timestamp = strtotime($item->f_tanggalpeminjaman);
+                                            $namaHari = [
+                                                'Minggu',
+                                                'Senin',
+                                                'Selasa',
+                                                'Rabu',
+                                                'Kamis',
+                                                'Jumat',
+                                                'Sabtu',
+                                            ];
+
+                                            // Array bulan dalam Bahasa Indonesia
+                                            $namaBulan = [
+                                                1 => 'Januari',
+                                                'Februari',
+                                                'Maret',
+                                                'April',
+                                                'Mei',
+                                                'Juni',
+                                                'Juli',
+                                                'Agustus',
+                                                'September',
+                                                'Oktober',
+                                                'November',
+                                                'Desember',
+                                            ];
+
+                                            // Mendapatkan nama hari
+                                            $hari = $namaHari[date('w', $timestamp)];
+
+                                            // Mendapatkan tanggal
+                                            $tanggal = date('j', $timestamp);
+
+                                            // Mendapatkan nama bulan
+                                            $bulan = $namaBulan[date('n', $timestamp)];
+
+                                            // Mendapatkan tahun
+                                            $tahun = date('Y', $timestamp);
+
+                                            // Format hasil
+                                            $formatHariTanggal = $hari . ', ' . $tanggal . ' ' . $bulan . ' ' . $tahun;
+                                        @endphp
+                                        {{ $formatHariTanggal }}
+                                        {{-- Surya Citra --}}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ $item->anggota->f_nama }}
+                                        {{-- Alan --}}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @php
+                                            if ($item->details->f_tanggalkembali == null) {
+                                                $tgkembali = 'Belum Dikembalikan';
+                                            } else {
+                                                $time = strtotime($item->details->f_tanggalkembali);
+                                                $nH = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                                                $nB = [
+                                                    1 => 'Januari',
+                                                    'Februari',
+                                                    'Maret',
+                                                    'April',
+                                                    'Mei',
+                                                    'Juni',
+                                                    'Juli',
+                                                    'Agustus',
+                                                    'September',
+                                                    'Oktober',
+                                                    'November',
+                                                    'Desember',
+                                                ];
+                                                $h = $nH[date('w', $time)];
+                                                $t = date('j', $time);
+                                                $b = $nB[date('n', $time)];
+                                                $ta = date('Y', $time);
+                                                $tgkembali = $h . ', ' . $t . ' ' . $b . ' ' . $ta;
+                                            }
+                                        @endphp
+                                        {{ $tgkembali }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ $item->admin->f_nama }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if ($item->details->f_tanggalkembali == null)
+                                            <a href="/dashboard/peminjaman/kembali/{{ $item->f_id }}"
+                                                class="text-white bg-green-500 px-4 py-2 rounded hover:bg-green-700 focus:outline-none">Kembalikan</a>
+                                        @else
+                                            @if (auth()->guard('admin')->user()->f_level == 'Admin')
+                                                <button data-modal-target="delete-popup" data-modal-toggle="delete-popup"
+                                                    data-id="{{ $item->f_id }}"
+                                                    class="text-white hover:bg-red-700 bg-red-500 rounded-md px-4 py-2"
+                                                    type="button">
+                                                    Hapus
+                                                </button>
+                                            @endif
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex justify-center items-center mt-4">
+                    <a href="{{ $peminjaman->previousPageUrl() }}"
+                        class="flex items-center justify-center px-3 h-8 me-3 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+                        <svg class="w-3.5 h-3.5 me-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 14 10">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 5H1m0 0 4 4M1 5l4-4" />
+                        </svg>
+                        Previous
+                    </a>
+                    <a href="{{ $peminjaman->nextPageUrl() }}"
+                        class="flex items-center justify-center px-3 h-8 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+                        Next
+                        <svg class="w-3.5 h-3.5 ms-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 14 10">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M1 5h12m0 0L9 1m4 4L9 9" />
+                        </svg>
+                    </a>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="delete-popup" tabindex="-1"
+        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <button type="button"
+                    class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                    data-modal-hide="delete-popup">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+                <div class="p-4 md:p-5 text-center">
+                    <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                    <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">Apakah kamu yakin ingin menghapus
+                        peminjaman ini?</h3>
+                    <a data-modal-hide="delete-popup" id="hapus-buku"
+                        class="text-white bg-red-600 hapus-buku hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
+                        Iya, hapus peminjaman
+                    </a>
+                    <button data-modal-hide="delete-popup" type="button"
+                        class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Tidak
+                        Kembali</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <a href="/dashboard/peminjaman/tambah"
+        class="fixed text-white bottom-4 right-4 bg-blue-500 px-4 py-2 rounded hover:bg-blue-700 focus:outline-none"><i
+            class="fa-light fa-circle-plus"></i>Tambah Peminjaman</a>
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+        crossorigin="anonymous"></script>
+    <script>
+        $('button[data-modal-toggle="delete-popup"]').click(function() {
+            var id = $(this).data('id');
+            var href = "/dashboard/peminjaman/hapus/" + id;
+            $('#hapus-buku').attr('href', href);
+        });
+    </script>
+@endsection
